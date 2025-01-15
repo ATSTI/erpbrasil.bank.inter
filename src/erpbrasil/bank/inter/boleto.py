@@ -87,8 +87,6 @@ class BoletoInter:
                 "complemento": "",
                 "bairro": self._payer.address.district,
             },
-            "multa": self.multa,
-            "mora": self.mora,
             "desconto1": {
                 "codigoDesconto": "PERCENTUALDATAINFORMADA",
                 "taxa": 4,
@@ -118,13 +116,12 @@ class BoletoInter:
                 "cep": self._sender.address.zipCode,
             }
         }
-        #    "multa": self.multa,
-        #    "mora": self.mora,
-        #    "multa": {
-        #        "taxa": self.multa or 0,
-        #        "codigo": "PERCENTUAL"
-        #    },
-        print(data)
+        if self.multa["taxa"]:
+            data["multa"] =  self.multa
+        if self.mora["taxa"]:
+            data["mora"] = self.mora
+
+        # print(data)
 
         if self._instructions:
             data['mensagem'] = {'linha{}'.format(k + 1): v for k, v in enumerate(self._instructions)}
