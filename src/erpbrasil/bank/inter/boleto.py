@@ -70,7 +70,7 @@ class BoletoInter:
             "valorNominal": self._amount,
             "valorAbatimento": 0,
             "dataVencimento": self._due_date,
-            "numDiasAgenda": 30,
+            "numDiasAgenda": 60,
             "atualizarPagador": "false",
             "pagador": {
                 "cpfCnpj": self._payer.identifier,
