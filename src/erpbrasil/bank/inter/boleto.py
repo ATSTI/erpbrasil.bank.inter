@@ -33,15 +33,13 @@ class BoletoInter:
         #    taxa=0
         #)
         #self.mora = dict(
-        #    taxa=mora or 0.02,
+        #    taxa=mora or 0,
         #    codigo="TAXAMENSAL",
         #)
         #self.multa = dict(
-        #    taxa=multa or 0.05,
+        #    taxa=multa or 0,
         #    codigo="PERCENTUAL",
         #)
-        self.mora = mora
-        self.multa = multa
         self.discount1 = discount1 or dict(
             codigoDesconto="NAOTEMDESCONTO",
             taxa=0,
@@ -60,6 +58,8 @@ class BoletoInter:
             valor=0,
             data=""
         )
+        self.mora = mora
+        self.multa = multa
 
     def _emissao_data(self):
         tipo_pessoa = "FISICA"
@@ -70,7 +70,7 @@ class BoletoInter:
             "valorNominal": self._amount,
             "valorAbatimento": 0,
             "dataVencimento": self._due_date,
-            "numDiasAgenda": 60,
+            "numDiasAgenda": 30,
             "atualizarPagador": "false",
             "pagador": {
                 "cpfCnpj": self._payer.identifier,
@@ -80,9 +80,9 @@ class BoletoInter:
                 "cidade": self._payer.address.city,
                 "uf": self._payer.address.stateCode,
                 "cep": self._payer.address.zipCode,
-                "email": "", #self._payer.email,
-                "ddd": "", #self._payer.phone[:2],
-                "telefone": "", #self._payer.phone[2:],
+                "email": self._payer.email,
+                "ddd": self._payer.ddd,
+                "telefone": self._payer.phone,
                 "numero": self._payer.address.streetLine2,
                 "complemento": "",
                 "bairro": self._payer.address.district,
@@ -116,12 +116,16 @@ class BoletoInter:
                 "cep": self._sender.address.zipCode,
             }
         }
+        #    "multa": self.multa,
+        #    "mora": self.mora,
+        #    "multa": {
+        #        "taxa": self.multa or 0,
+        #        "codigo": "PERCENTUAL"
+        #    },
         if self.multa["taxa"]:
             data["multa"] =  self.multa
         if self.mora["taxa"]:
             data["mora"] = self.mora
-
-        # print(data)
 
         if self._instructions:
             data['mensagem'] = {'linha{}'.format(k + 1): v for k, v in enumerate(self._instructions)}
