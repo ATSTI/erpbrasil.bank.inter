@@ -72,15 +72,15 @@ class ApiInter(object):
         return TOKEN
 
     def _prepare_headers(self):
-        if self.token is not None:
-            tempo_token = (datetime.now() - self.data_do_ultimo_token).total_seconds()
-            if tempo_token > 3600:
-                new_token = self._prepare_token()
-                self.data_do_ultimo_token = datetime.now()
-                self.token = new_token
-        else:
-            self.token = self._prepare_token()
-            self.data_do_ultimo_token = datetime.now()
+        #if self.token is not None:
+        #    tempo_token = (datetime.now() - self.data_do_ultimo_token).total_seconds()
+        #    if tempo_token > 3600:
+        #        new_token = self._prepare_token()
+        #        self.data_do_ultimo_token = datetime.now()
+        #        self.token = new_token
+        #else:
+        #    self.token = self._prepare_token()
+        #    self.data_do_ultimo_token = datetime.now()
 
         return {
             "Authorization": "Bearer " + self.token,
