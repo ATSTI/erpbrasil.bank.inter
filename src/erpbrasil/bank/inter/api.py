@@ -27,6 +27,7 @@ ORDENAR_CONSULTA_POR = [
 class ApiInter(object):
     """ Implementa a Api do Inter"""
 
+    data_do_ultimo_token = None
     token = None
 
     def __init__(self, cert, conta_corrente, client_id, client_secret, client_environment, token):
@@ -39,30 +40,29 @@ class ApiInter(object):
         if self._client_environment == "1":
            self._api = 'https://cdpj.partners.bancointer.com.br/cobranca/v3/'
         else:
+           # sandbox
            self._api = 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/'
 
-    def _prepare_token(self, tipo):
+    def _prepare_token(self):
         if self._client_environment == "1":
             URL_OAUTH = "https://cdpj.partners.bancointer.com.br/oauth/v2/token"
         else:
+            # sandbox
             URL_OAUTH = "https://cdpj-sandbox.partners.uatinter.co/oauth/v2/token"
         D1 = "client_id={}".format(self._client_id)
         D2 = "client_secret={}".format(self._client_secret)
-        if tipo == "leitura":
-            D3 = "scope=boleto-cobranca.read"
-        #D3 = "scope=boleto-cobranca.read boleto-cobranca.write"
-        if tipo == "escrita":
-            D3 = "scope=boleto-cobranca.write"
+        D3 = "scope=boleto-cobranca.read boleto-cobranca.write"
+        #D3 = "scope=boleto-cobranca.write"
         D4 = "grant_type=client_credentials"
         DADOS = f"{D1}&{D2}&{D3}&{D4}"
         print(f"{D1} - {D2} - {D3}")
         response = requests.post(
             URL_OAUTH,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
-            cert=self._cert,
             data=DADOS,
+            cert=self._cert,
+            timeout=(10)
         )
-        #    timeout=(10)
         response.raise_for_status()
         # Isola o access_token do JSON recebido
         access_token = response.json().get("access_token")
@@ -72,15 +72,16 @@ class ApiInter(object):
         return TOKEN
 
     def _prepare_headers(self):
-        #if self.token:
-        #    tempo_token = (datetime.now() - self.data_do_ultimo_token).total_seconds()
-        #    if tempo_token > 3600:
-        #        new_token = self._prepare_token()
-        #        self.data_do_ultimo_token = datetime.now()
-        #        self.token = new_token
-        #else:
-        #    self.token = self._prepare_token()
-        #    self.data_do_ultimo_token = datetime.now()
+        if self.token is not None:
+            tempo_token = (datetime.now() - self.data_do_ultimo_token).total_seconds()
+            if tempo_token > 3600:
+                new_token = self._prepare_token()
+                self.data_do_ultimo_token = datetime.now()
+                self.token = new_token
+        else:
+            self.token = self._prepare_token()
+            self.data_do_ultimo_token = datetime.now()
+
         return {
             "Authorization": "Bearer " + self.token,
             "x-conta-corrente": self.conta_corrente,
@@ -100,16 +101,10 @@ class ApiInter(object):
         # response.raise_for_status()
         # print(response.text)
         if response.status_code > 299:
-            message = '%s - Código %s' % (
-                response.status_code,
-                response.text,
-            )
-            raise Exception(message)
+            data = response.json()
+            data["erro"] = "true"
+            return data
         return response
-
-    def get_token(self, tipo):
-        token = self._prepare_token(tipo)
-        return token
 
     def boleto_inclui(self, boleto):
         """ POST
@@ -123,21 +118,8 @@ class ApiInter(object):
             url=self._api + 'cobrancas',
             data=json.dumps(boleto),
         )
-        return result.content and result.json() or result.ok
-
-    def consulta_boleto(self, codigo_solicitacao=False):
-        """
-            GET https://cdpj.partners.bancointer.com.br/cobranca/v3/cobrancas/{codigoSolicitacao}
-        """
-        if not codigo_solicitacao:
-            raise Exception('Código solicitação não informado.')
-
-        url = self._api + 'cobrancas/' + codigo_solicitacao
-
-        result = self._call(
-            requests.get,
-            url=url,
-        )
+        if isinstance(result, dict) and result.get("erro"):
+            return result
         return result.content and result.json() or result.ok
 
     def consulta_boleto_detalhado(self, nosso_numero=False):
@@ -172,6 +154,8 @@ class ApiInter(object):
             url=url,
             params=opFiltros
         )
+        if isinstance(result, dict) and result.get("erro"):
+            return result
         return result.content and result.json() or result.ok
 
     def boleto_baixa(self, nosso_numero, codigo_baixa):
@@ -189,6 +173,8 @@ class ApiInter(object):
             data='{{"motivoCancelamento":"{}"}}'.format(codigo_baixa)
 
         )
+        if isinstance(result, dict) and result.get("erro"):
+            return result
         return result.content and result.json() or result.ok
 
     def boleto_pdf(self, nosso_numero):
@@ -204,4 +190,6 @@ class ApiInter(object):
             requests.get,
             url=url,
         )
+        if isinstance(result, dict) and result.get("erro"):
+            return result
         return result.content
