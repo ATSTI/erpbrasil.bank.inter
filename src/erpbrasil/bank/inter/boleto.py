@@ -27,39 +27,24 @@ class BoletoInter:
         self._identifier = identifier
         self._instructions = instructions or []
 
-        #self.mora = mora or dict(
-        #    codigoMora="ISENTO",
-        #    valor=0,
-        #    taxa=0
-        #)
-        #self.mora = dict(
-        #    taxa=mora or 0,
-        #    codigo="TAXAMENSAL",
-        #)
-        #self.multa = dict(
-        #    taxa=multa or 0,
-        #    codigo="PERCENTUAL",
-        #)
-        self.discount1 = discount1 or dict(
-            codigoDesconto="NAOTEMDESCONTO",
-            taxa=0,
-            valor=0,
-            data=""
-        )
-        self.discount2 = discount2 or dict(
-            codigoDesconto="NAOTEMDESCONTO",
-            taxa=0,
-            valor=0,
-            data=""
-        )
-        self.discount3 = discount3 or dict(
-            codigoDesconto="NAOTEMDESCONTO",
-            taxa=0,
-            valor=0,
-            data=""
-        )
         self.mora = mora
         self.multa = multa
+
+        self.discount1 = discount1 or dict(
+            taxa=0,
+            codigo="PERCENTUALDATAINFORMADA",
+            quantidadeDias=0,
+        )
+        self.discount2 = discount2 or dict(
+            taxa=0,
+            codigo="PERCENTUALDATAINFORMADA",
+            quantidadeDias=0,
+        )
+        self.discount3 = discount3 or dict(
+            taxa=0,
+            codigo="PERCENTUALDATAINFORMADA",
+            quantidadeDias=0,
+        )
 
     def _emissao_data(self):
         tipo_pessoa = "FISICA"
@@ -87,24 +72,9 @@ class BoletoInter:
                 "complemento": "",
                 "bairro": self._payer.address.district,
             },
-            "desconto1": {
-                "codigoDesconto": "PERCENTUALDATAINFORMADA",
-                "taxa": 4,
-                "valor": self.discount1,
-                "data": self._due_date
-            },
-            "desconto2": {
-                "codigoDesconto": "PERCENTUALDATAINFORMADA",
-                "taxa": 4,
-                "valor": self.discount2,
-                "data": self._due_date
-            },
-            "desconto3": {
-                "codigoDesconto": "PERCENTUALDATAINFORMADA",
-                "taxa": 4,
-                "valor": self.discount3,
-                "data": self._due_date
-            },
+            "desconto1": self.discount1,
+            "desconto2": self.discount2,
+            "desconto3": self.discount3,
             "beneficiarioFinal": {
                 "cpfCnpj": self._sender.identifier,
                 "tipoPessoa": "JURIDICA",
@@ -116,12 +86,6 @@ class BoletoInter:
                 "cep": self._sender.address.zipCode,
             }
         }
-        #    "multa": self.multa,
-        #    "mora": self.mora,
-        #    "multa": {
-        #        "taxa": self.multa or 0,
-        #        "codigo": "PERCENTUAL"
-        #    },
         if self.multa["taxa"]:
             data["multa"] =  self.multa
         if self.mora["taxa"]:
