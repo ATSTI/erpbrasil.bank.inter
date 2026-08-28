@@ -27,35 +27,57 @@ class BoletoInter:
         self._identifier = identifier
         self._instructions = instructions or []
 
+        #self.mora = mora or dict(
+        #    codigoMora="ISENTO",
+        #    valor=0,
+        #    taxa=0
+        #)
+        #self.mora = dict(
+        #    taxa=mora or 0.02,
+        #    codigo="TAXAMENSAL",
+        #)
+        #self.multa = dict(
+        #    taxa=multa or 0.05,
+        #    codigo="PERCENTUAL",
+        #)
         self.mora = mora
         self.multa = multa
-
-        self.discount1 = discount1 or dict(
-            taxa=0,
-            codigo="PERCENTUALDATAINFORMADA",
-            quantidadeDias=0,
-        )
+        self.discount1 = discount1
         self.discount2 = discount2 or dict(
+            codigoDesconto="NAOTEMDESCONTO",
             taxa=0,
-            codigo="PERCENTUALDATAINFORMADA",
-            quantidadeDias=0,
+            valor=0,
+            data=""
         )
         self.discount3 = discount3 or dict(
+            codigoDesconto="NAOTEMDESCONTO",
             taxa=0,
-            codigo="PERCENTUALDATAINFORMADA",
-            quantidadeDias=0,
+            valor=0,
+            data=""
         )
 
     def _emissao_data(self):
         tipo_pessoa = "FISICA"
         if len(self._payer.identifier) > 11:
             tipo_pessoa = "JURIDICA"
+        #    "desconto2": {
+        #        "codigoDesconto": "PERCENTUALDATAINFORMADA",
+        #        "taxa": 4,
+        #        "valor": self.discount2,
+        #        "data": self._due_date
+        #    },
+        #    "desconto3": {
+        #        "codigoDesconto": "PERCENTUALDATAINFORMADA",
+        #        "taxa": 4,
+        #        "valor": self.discount3,
+        #        "data": self._due_date
+        #    },
         data = {
             "seuNumero": self._identifier[:15],
             "valorNominal": self._amount,
             "valorAbatimento": 0,
             "dataVencimento": self._due_date,
-            "numDiasAgenda": 30,
+            "numDiasAgenda": 60,
             "atualizarPagador": "false",
             "pagador": {
                 "cpfCnpj": self._payer.identifier,
@@ -72,9 +94,6 @@ class BoletoInter:
                 "complemento": "",
                 "bairro": self._payer.address.district,
             },
-            "desconto1": self.discount1,
-            "desconto2": self.discount2,
-            "desconto3": self.discount3,
             "beneficiarioFinal": {
                 "cpfCnpj": self._sender.identifier,
                 "tipoPessoa": "JURIDICA",
@@ -90,6 +109,9 @@ class BoletoInter:
             data["multa"] =  self.multa
         if self.mora["taxa"]:
             data["mora"] = self.mora
+        if self.discount1:
+            data["desconto"] = self.discount1
+        # print(data)
 
         if self._instructions:
             data['mensagem'] = {'linha{}'.format(k + 1): v for k, v in enumerate(self._instructions)}
